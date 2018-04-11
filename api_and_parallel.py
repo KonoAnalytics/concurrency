@@ -36,10 +36,10 @@ def get_from_api(api_param1, api_param2, port, proc, return_df):
 
     # USE THIS IF YOU WANT TO SIMULATE AN API
     time.sleep(random.randint(10,20)/10)
-    if api_param1 * (api_param2-1) >= 1000: #exit after returning at least 1000 records
-        return_df[proc] = pd.DataFrame(np.random.randint(0,100,size=(0, 4)), columns=['id','A','B','C'])
-    else:
+    if api_param1 * (api_param2-1) <= 1000: #exit after returning at least 1000 records
         return_df[proc] = pd.DataFrame(np.random.randint(0,100,size=(api_param1, 4)), columns=['id','A','B','C'])
+    else:
+        return_df[proc] = pd.DataFrame(np.random.randint(0,100,size=(0, 4)), columns=['id','A','B','C'])
 
 def combine_dfs(list_df, df_cumulative):
     '''
@@ -47,7 +47,22 @@ def combine_dfs(list_df, df_cumulative):
     :param list_df: list of data frames (each may be empty)
     :param df_cumulative: existing data frame (may be empty)
     :return: df_cumulative (if non-0 lenght), apppended with all non-0 length dataframes in list_df
+    also done, which is true if at least one of the list_df dataframes is empty
     '''
+
+    done = False
+    df = pd.DataFrame(columns=['id','A','B','C'])
+    for i in range(len(list_df)):
+        df = df.append(list_df[i])
+    if len(df) == 0:
+        done = True
+    if len(df_cumulative):
+        df_cumulative = df_cumulative.append(df)
+    else:
+        df_cumulative = df
+    return done, df_cumulative
+
+
     done = False
     for i in range(len(list_df)):
         if len(list_df[i]): # if the dataframe has records
@@ -104,7 +119,7 @@ def multi_thread(api_param1, port, num_workers, fileout):
     jobs = []
     done = False
     while not done:
-        manager = mp.Manager()
+        #manager = mp.Manager()
         return_df = mp.Manager().dict()
         for i in range(num_workers):
             api_param2 = api_param2 + 1
